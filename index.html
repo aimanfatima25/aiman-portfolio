@@ -7,8 +7,15 @@
   <meta name="description" content="Aiman Fatima — AI Automation & Workflow Builder working with n8n, Claude, APIs and FastAPI." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <!-- Apply the saved theme before the page paints (prevents a flash) -->
+  <script>
+    try {
+      var t = localStorage.getItem("af-theme");
+      if (t) document.documentElement.setAttribute("data-theme", t);
+    } catch (e) {}
+  </script>
 </head>
 <body>
 
@@ -16,6 +23,10 @@
   <canvas id="bg-canvas" aria-hidden="true"></canvas>
   <div class="bg-glow glow-1" aria-hidden="true"></div>
   <div class="bg-glow glow-2" aria-hidden="true"></div>
+  <div class="cherries" id="cherries" aria-hidden="true"></div>
+
+  <!-- Scroll progress line -->
+  <div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
 
   <!-- Navigation -->
   <header class="nav" id="nav">
@@ -34,9 +45,27 @@
         <a href="#contact" class="nav-link nav-cta">Contact</a>
       </nav>
 
-      <button class="menu-toggle" id="menu-toggle" aria-label="Open menu" aria-expanded="false">
-        <span></span><span></span><span></span>
-      </button>
+      <div class="nav-right">
+        <span class="status-pill"><span class="pulse-dot"></span> Open to opportunities</span>
+        <span class="nav-clock" id="nav-clock" title="My local time">LAHORE --:--</span>
+
+        <div class="theme-switch">
+          <button class="theme-btn" id="theme-btn" aria-label="Change theme" aria-haspopup="true" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>
+          </button>
+          <div class="theme-menu" id="theme-menu" role="menu">
+            <p class="theme-menu-title">Theme</p>
+            <button class="theme-opt" role="menuitemradio" data-theme-choice="midnight"><span class="swatch sw-midnight"></span>Midnight</button>
+            <button class="theme-opt" role="menuitemradio" data-theme-choice="daylight"><span class="swatch sw-daylight"></span>Daylight</button>
+            <button class="theme-opt" role="menuitemradio" data-theme-choice="cherry"><span class="swatch sw-cherry"></span>Cherry Cream</button>
+            <button class="theme-opt" role="menuitemradio" data-theme-choice="mocha"><span class="swatch sw-mocha"></span>Mocha</button>
+          </div>
+        </div>
+
+        <button class="menu-toggle" id="menu-toggle" aria-label="Open menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -46,9 +75,9 @@
     <section class="hero" id="home">
       <div class="container hero-inner">
         <div class="hero-content">
-          <p class="eyebrow reveal"><span class="pulse-dot"></span> Available for automation work</p>
+          <p class="eyebrow reveal">✦ AI Automation · n8n · Claude · APIs</p>
           <h1 class="hero-title reveal">
-            Hi, I'm <span class="gradient-text">Aiman Fatima</span>
+            Hi, I'm <span class="accent-text">Aiman Fatima</span>
           </h1>
           <h2 class="hero-subtitle reveal">
             AI Automation &amp; <span class="typed" id="typed">Workflow Builder</span><span class="caret">|</span>
@@ -107,7 +136,7 @@
       <div class="container">
         <div class="section-head reveal">
           <span class="section-tag">01 · About Me</span>
-          <h2 class="section-title">Building automations that <span class="gradient-text">think and connect</span></h2>
+          <h2 class="section-title">Building automations that <span class="accent-text">think and connect</span></h2>
         </div>
 
         <div class="about-grid">
@@ -160,7 +189,7 @@
       <div class="container">
         <div class="section-head reveal">
           <span class="section-tag">02 · Skills</span>
-          <h2 class="section-title">What I <span class="gradient-text">bring to the table</span></h2>
+          <h2 class="section-title">What I <span class="accent-text">bring to the table</span></h2>
           <p class="section-sub">Core skills across automation, AI integration and backend development.</p>
         </div>
 
@@ -209,7 +238,7 @@
       <div class="container">
         <div class="section-head reveal">
           <span class="section-tag">03 · What I Work With</span>
-          <h2 class="section-title">My <span class="gradient-text">toolkit</span></h2>
+          <h2 class="section-title">My <span class="accent-text">toolkit</span></h2>
           <p class="section-sub">The platforms and technologies at the centre of my work.</p>
         </div>
 
@@ -253,7 +282,7 @@
       <div class="container">
         <div class="section-head reveal">
           <span class="section-tag">04 · Work &amp; Expertise</span>
-          <h2 class="section-title">Types of solutions <span class="gradient-text">I can build</span></h2>
+          <h2 class="section-title">Types of solutions <span class="accent-text">I can build</span></h2>
           <p class="section-sub">General areas of expertise — project specifics are kept confidential.</p>
         </div>
 
@@ -319,7 +348,7 @@
       <div class="container">
         <div class="section-head reveal center">
           <span class="section-tag">05 · Contact</span>
-          <h2 class="section-title">Let's <span class="gradient-text">work together</span></h2>
+          <h2 class="section-title">Let's <span class="accent-text">work together</span></h2>
           <p class="section-sub">Have an idea for an automation or want to connect? I'd love to hear from you.</p>
         </div>
 
@@ -361,9 +390,37 @@
   </main>
 
   <footer class="footer">
-    <div class="container footer-inner">
-      <p>© <span id="year"></span> Aiman Fatima · AI Automation &amp; Workflow Builder</p>
-      <a href="#home" class="to-top" aria-label="Back to top">↑</a>
+    <div class="container">
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Aiman Fatima</h4>
+          <p>AI Automation &amp; Workflow Builder.</p>
+          <p class="footer-muted">Lahore, Pakistan</p>
+        </div>
+        <div class="footer-col">
+          <h4>About this site</h4>
+          <p class="footer-mono">Hand-built with HTML, CSS &amp; JavaScript.<br />Hosted on GitHub Pages. No tracking.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Elsewhere</h4>
+          <ul class="footer-links">
+            <li><a href="https://github.com/aimanfatima25" target="_blank" rel="noopener">GitHub <span>↗</span></a></li>
+            <li><a href="https://www.linkedin.com/in/aiman-fatima-4a7680427/" target="_blank" rel="noopener">LinkedIn <span>↗</span></a></li>
+            <li><a href="mailto:aimanfatima111225@gmail.com">Email <span>↗</span></a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-mono">© <span id="year"></span> Aiman Fatima</p>
+        <a href="#home" class="to-top" aria-label="Back to top">↑</a>
+      </div>
+    </div>
+
+    <!-- Giant name: letters slide up, then a shine sweeps across -->
+    <div class="big-name" id="big-name" aria-label="Aiman Fatima">
+      <div class="big-name-layer base" aria-hidden="true" data-text="AIMAN FATIMA"></div>
+      <div class="big-name-layer shine" aria-hidden="true" data-text="AIMAN FATIMA"></div>
     </div>
   </footer>
 
