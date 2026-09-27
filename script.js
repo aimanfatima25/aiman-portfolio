@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const themeBtn = document.getElementById("theme-btn");
   const themeMenu = document.getElementById("theme-menu");
   const themeOpts = themeMenu.querySelectorAll(".theme-opt");
-  const THEMES = ["midnight", "daylight", "cherry", "mocha"];
+  const THEMES = ["midnight", "daylight", "cherry", "mocha", "cloud", "coquette", "boba"];
 
   const applyTheme = (name, save) => {
     if (!THEMES.includes(name)) name = "midnight";
@@ -64,53 +64,146 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("scroll", updateProgress, { passive: true });
   window.addEventListener("resize", updateProgress);
 
-  /* ---------- Cherry Cream: scatter cherries ---------- */
-  const cherryBox = document.getElementById("cherries");
-  const cherrySVG = `
-    <svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg">
-      <path d="M34 6 C31 20 24 30 19 44" fill="none" stroke="#5b3a1e" stroke-width="2.6" stroke-linecap="round"/>
-      <path d="M34 6 C38 22 43 32 45 46" fill="none" stroke="#5b3a1e" stroke-width="2.6" stroke-linecap="round"/>
-      <path d="M34 7 C40 1 51 2 56 9 C48 13 40 12 34 7 Z" fill="#4f8a3c"/>
-      <path d="M36 7 C42 6 48 7 53 9" fill="none" stroke="#3b6b2c" stroke-width="1"/>
-      <circle cx="18" cy="53" r="12" fill="#b3172e"/>
-      <circle cx="45" cy="55" r="12" fill="#c8243c"/>
-      <ellipse cx="13.5" cy="48.5" rx="3.6" ry="2.4" fill="#fff" opacity=".55" transform="rotate(-30 13.5 48.5)"/>
-      <ellipse cx="40.5" cy="50.5" rx="3.6" ry="2.4" fill="#fff" opacity=".55" transform="rotate(-30 40.5 50.5)"/>
-    </svg>`;
+  /* ---------- Theme decorations (cherries, clouds, bows, boba…) ---------- */
+  const decorBox = document.getElementById("decor");
+
+  const ART = {
+    cherry: `
+      <svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg">
+        <path d="M34 6 C31 20 24 30 19 44" fill="none" stroke="#5b3a1e" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M34 6 C38 22 43 32 45 46" fill="none" stroke="#5b3a1e" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M34 7 C40 1 51 2 56 9 C48 13 40 12 34 7 Z" fill="#4f8a3c"/>
+        <path d="M36 7 C42 6 48 7 53 9" fill="none" stroke="#3b6b2c" stroke-width="1"/>
+        <circle cx="18" cy="53" r="12" fill="#b3172e"/>
+        <circle cx="45" cy="55" r="12" fill="#c8243c"/>
+        <ellipse cx="13.5" cy="48.5" rx="3.6" ry="2.4" fill="#fff" opacity=".55" transform="rotate(-30 13.5 48.5)"/>
+        <ellipse cx="40.5" cy="50.5" rx="3.6" ry="2.4" fill="#fff" opacity=".55" transform="rotate(-30 40.5 50.5)"/>
+      </svg>`,
+
+    cloud: `
+      <svg viewBox="0 0 120 64" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22 56 C8 56 4 42 14 36 C12 22 30 16 38 26 C42 10 66 6 74 22 C84 12 104 18 102 34 C116 36 116 56 100 56 Z" fill="#ffffff"/>
+        <path d="M22 56 C12 56 8 50 10 45 C18 50 60 52 112 47 C110 53 106 56 100 56 Z" fill="#d9ecfa"/>
+      </svg>`,
+
+    bird: `
+      <svg viewBox="0 0 64 56" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 34 L2 28 L6 38 Z" fill="#3c7fc4"/>
+        <ellipse cx="32" cy="32" rx="22" ry="19" fill="#5aa6e8"/>
+        <ellipse cx="36" cy="38" rx="13" ry="10" fill="#e6f4ff"/>
+        <path d="M18 30 C24 22 34 24 34 32 C28 36 22 36 18 30 Z" fill="#3c7fc4"/>
+        <circle cx="42" cy="25" r="3" fill="#15314a"/>
+        <circle cx="43" cy="24" r="1" fill="#fff"/>
+        <path d="M52 27 L61 30 L52 33 Z" fill="#f5a524"/>
+        <circle cx="46" cy="32" r="2.6" fill="#ff9fb8" opacity=".7"/>
+        <path d="M28 51 v4 M36 51 v4" stroke="#f5a524" stroke-width="2" stroke-linecap="round"/>
+      </svg>`,
+
+    tree: `
+      <svg viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg">
+        <path d="M31 58 h8 l2 30 h-12 Z" fill="#9a6a44"/>
+        <circle cx="35" cy="34" r="26" fill="#6cc27a"/>
+        <circle cx="20" cy="44" r="15" fill="#5ab169"/>
+        <circle cx="50" cy="44" r="15" fill="#5ab169"/>
+        <circle cx="27" cy="24" r="8" fill="#8fd89b" opacity=".8"/>
+        <circle cx="44" cy="30" r="2.6" fill="#ff8fab"/>
+        <circle cx="26" cy="42" r="2.6" fill="#ff8fab"/>
+        <circle cx="38" cy="50" r="2.6" fill="#ff8fab"/>
+      </svg>`,
+
+    bow: `
+      <svg viewBox="0 0 80 64" xmlns="http://www.w3.org/2000/svg">
+        <path d="M36 30 L24 60 L32 56 L36 62 L40 34 Z" fill="#e8628c"/>
+        <path d="M44 30 L56 60 L48 56 L44 62 L40 34 Z" fill="#e8628c"/>
+        <path d="M38 26 C26 6 4 8 6 22 C8 36 28 36 38 30 Z" fill="#f48fb1"/>
+        <path d="M42 26 C54 6 76 8 74 22 C72 36 52 36 42 30 Z" fill="#f48fb1"/>
+        <path d="M34 26 C24 16 14 16 12 22" fill="none" stroke="#e8628c" stroke-width="2" stroke-linecap="round"/>
+        <path d="M46 26 C56 16 66 16 68 22" fill="none" stroke="#e8628c" stroke-width="2" stroke-linecap="round"/>
+        <rect x="33" y="21" width="14" height="14" rx="6" fill="#e8628c"/>
+        <ellipse cx="16" cy="16" rx="4" ry="2.4" fill="#fff" opacity=".6" transform="rotate(-25 16 16)"/>
+      </svg>`,
+
+    flower: `
+      <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <g fill="#ffd1dc">
+          <circle cx="30" cy="14" r="11"/><circle cx="45" cy="25" r="11"/><circle cx="39" cy="43" r="11"/>
+          <circle cx="21" cy="43" r="11"/><circle cx="15" cy="25" r="11"/>
+        </g>
+        <g fill="#ffb3c7" opacity=".6">
+          <circle cx="30" cy="17" r="5"/><circle cx="42" cy="26" r="5"/><circle cx="37" cy="40" r="5"/>
+          <circle cx="23" cy="40" r="5"/><circle cx="18" cy="26" r="5"/>
+        </g>
+        <circle cx="30" cy="30" r="8" fill="#ffd166"/>
+        <circle cx="28" cy="28" r="2.4" fill="#fff3c4"/>
+      </svg>`,
+
+    boba: `
+      <svg viewBox="0 0 64 96" xmlns="http://www.w3.org/2000/svg">
+        <path d="M38 2 L34 30" stroke="#e76f8c" stroke-width="6" stroke-linecap="round"/>
+        <path d="M10 26 C10 12 54 12 54 26 Z" fill="#fff8ef" opacity=".95"/>
+        <rect x="6" y="25" width="52" height="7" rx="3.5" fill="#fff8ef"/>
+        <path d="M10 32 L54 32 L48 90 C47.6 93 45 94 42 94 L22 94 C19 94 16.4 93 16 90 Z" fill="#e8c9a3"/>
+        <path d="M11 42 L53 42 L48 90 C47.6 93 45 94 42 94 L22 94 C19 94 16.4 93 16 90 Z" fill="#c99a6b"/>
+        <g fill="#3b2418">
+          <circle cx="22" cy="86" r="4"/><circle cx="31" cy="88" r="4"/><circle cx="40" cy="86" r="4"/>
+          <circle cx="26" cy="79" r="4"/><circle cx="36" cy="80" r="4"/><circle cx="44" cy="78" r="3.6"/><circle cx="19" cy="77" r="3.6"/>
+        </g>
+        <circle cx="25" cy="58" r="2.6" fill="#3b2418"/>
+        <circle cx="39" cy="58" r="2.6" fill="#3b2418"/>
+        <path d="M29 63 Q32 66 35 63" fill="none" stroke="#3b2418" stroke-width="2" stroke-linecap="round"/>
+        <ellipse cx="20" cy="63" rx="3.4" ry="2" fill="#ff9fb0" opacity=".75"/>
+        <ellipse cx="44" cy="63" rx="3.4" ry="2" fill="#ff9fb0" opacity=".75"/>
+        <path d="M15 36 L17 84" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".35"/>
+      </svg>`
+  };
+
+  // Which pieces each theme uses: [art, how it moves, base size, extra random size]
+  const DECOR = {
+    cherry:   [["cherry", "sway", 34, 18]],
+    cloud:    [["cloud", "drift", 90, 40], ["bird", "bob", 40, 12], ["tree", "sway-soft", 58, 20], ["bird", "bob", 34, 10], ["cloud", "drift", 70, 30]],
+    coquette: [["bow", "sway", 50, 16], ["flower", "spin", 34, 14]],
+    boba:     [["boba", "bob", 44, 14]]
+  };
 
   // Small seeded random so the layout looks the same on every visit
   let seed = 7;
   const rand = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
 
-  const scatterCherries = () => {
-    cherryBox.innerHTML = "";
+  const scatterDecor = () => {
+    decorBox.innerHTML = "";
+    const set = DECOR[root.getAttribute("data-theme")];
+    if (!set) return;
     seed = 7;
     const h = document.documentElement.scrollHeight;
     const w = window.innerWidth;
     const small = w < 860;
-    const gap = small ? 420 : 300;               // vertical spacing between cherries
+    const gap = small ? 420 : 300;               // vertical spacing between pieces
     const count = Math.ceil(h / gap);
     for (let i = 0; i < count; i++) {
+      const [art, motion, base, extra] = set[i % set.length];
       const left = i % 2 === 0;
-      const size = (small ? 26 : 34) + rand() * (small ? 10 : 18);
-      // On phones, tuck cherries half off the screen edge so they never cover text
-      const edge = small ? `${-size * 0.45}px` : (1.5 + rand() * 6) + "%";
+      const scale = small ? 0.72 : 1;
+      const size = (base + rand() * extra) * scale;
+      // On phones, tuck pieces half off the screen edge so they never cover text
+      const edge = small ? `${-size * 0.45}px` : (1 + rand() * 6) + "%";
       const el = document.createElement("div");
-      el.className = "cherry";
-      el.innerHTML = cherrySVG;
+      el.className = `decor-item m-${motion}`;
+      el.innerHTML = ART[art];
       el.style.width = size + "px";
       el.style.top = (i * gap + 120 + rand() * (gap - 160)) + "px";
       el.style[left ? "left" : "right"] = edge;
-      el.style.setProperty("--r", (left ? -1 : 1) * (8 + rand() * 14) + "deg");
+      if (art === "bird" && !left) el.firstElementChild.style.transform = "scaleX(-1)";   // birds face inward
+      el.style.setProperty("--r", (motion === "sway" ? (left ? -1 : 1) * (8 + rand() * 14) : 0) + "deg");
       el.style.animationDelay = (-rand() * 6) + "s";
-      el.style.opacity = (small ? 0.55 : 0.8 + rand() * 0.2).toFixed(2);
-      cherryBox.appendChild(el);
+      el.style.opacity = (small ? 0.6 : 0.85 + rand() * 0.15).toFixed(2);
+      decorBox.appendChild(el);
     }
   };
-  scatterCherries();
+  scatterDecor();
+  document.addEventListener("themechange", scatterDecor);
   let ct;
-  window.addEventListener("resize", () => { clearTimeout(ct); ct = setTimeout(scatterCherries, 200); });
-  window.addEventListener("load", scatterCherries);
+  window.addEventListener("resize", () => { clearTimeout(ct); ct = setTimeout(scatterDecor, 200); });
+  window.addEventListener("load", scatterDecor);
 
   /* ---------- Navbar: scrolled state ---------- */
   const nav = document.getElementById("nav");
@@ -228,22 +321,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  /* ---------- Contact form (opens email app, no backend) ---------- */
+  /* ---------- Contact form (sends via Web3Forms, no backend needed) ---------- */
   const form = document.getElementById("contact-form");
   const note = document.getElementById("form-note");
+  const submitBtn = form.querySelector('button[type="submit"]');
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const nameInput = document.getElementById("cf-name");
+  const emailInput = document.getElementById("cf-email");
+  const msgInput = document.getElementById("cf-message");
 
-  form.addEventListener("submit", e => {
+  form.addEventListener("submit", async e => {
     e.preventDefault();
-    const name = form.name.value.trim();
-    const email = form.email.value.trim();
-    const message = form.message.value.trim();
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const message = msgInput.value.trim();
 
     form.querySelectorAll(".field").forEach(f => f.classList.remove("error"));
     const bad = [];
-    if (!name) bad.push(form.name);
-    if (!emailRe.test(email)) bad.push(form.email);
-    if (!message) bad.push(form.message);
+    if (!name) bad.push(nameInput);
+    if (!emailRe.test(email)) bad.push(emailInput);
+    if (!message) bad.push(msgInput);
 
     if (bad.length) {
       bad.forEach(el => el.closest(".field").classList.add("error"));
@@ -252,13 +349,36 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const subject = encodeURIComponent(`Portfolio enquiry from ${name}`);
-    const body = encodeURIComponent(`${message}\n\n— ${name}\n${email}`);
-    window.location.href = `mailto:aimanfatima111225@gmail.com?subject=${subject}&body=${body}`;
+    const data = Object.fromEntries(new FormData(form));
+    data.subject = `New portfolio message from ${name}`;
+    data.replyto = email;
 
-    note.className = "form-note ok";
-    note.textContent = "Opening your email app… thank you for reaching out!";
-    form.reset();
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Sending…";
+    note.className = "form-note";
+    note.textContent = "";
+
+    try {
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json().catch(() => ({}));
+      if (res.ok && result.success) {
+        note.className = "form-note ok";
+        note.textContent = "✓ Message sent! Thank you — I'll get back to you soon.";
+        form.reset();
+      } else {
+        throw new Error(result.message || "Request failed");
+      }
+    } catch (err) {
+      note.className = "form-note err";
+      note.innerHTML = 'Sorry, something went wrong. Please email me directly at <a href="mailto:aimanfatima111225@gmail.com">aimanfatima111225@gmail.com</a>.';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Send Message";
+    }
   });
 
   /* ---------- Giant footer name ---------- */

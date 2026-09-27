@@ -85,6 +85,66 @@
   color-scheme: dark;
 }
 
+[data-theme="cloud"] {
+  --bg: #e4f2fc;
+  --bg-2: #f5fbff;
+  --text: #15314a;
+  --muted: #4d6982;
+  --faint: #86a0b6;
+  --accent: #2f7fd0;
+  --accent-2: #f2944a;
+  --ok: #2e9468;
+  --on-accent: #ffffff;
+  --card: rgba(255, 255, 255, 0.82);
+  --nav-bg: rgba(228, 242, 252, 0.86);
+  --glow-1: #b9ddfb;
+  --glow-2: #fff1c9;
+  --glow-opacity: 0.7;
+  --particle: 47, 127, 208;
+  --particle-alpha: 0;
+  color-scheme: light;
+}
+
+[data-theme="coquette"] {
+  --bg: #fde7ee;
+  --bg-2: #fff5f8;
+  --text: #4a1d2f;
+  --muted: #86556a;
+  --faint: #b58a9c;
+  --accent: #d9467a;
+  --accent-2: #f08aab;
+  --ok: #3f8f64;
+  --on-accent: #ffffff;
+  --card: rgba(255, 246, 249, 0.86);
+  --nav-bg: rgba(253, 231, 238, 0.86);
+  --glow-1: #ffc4d6;
+  --glow-2: #ffe0ea;
+  --glow-opacity: 0.7;
+  --particle: 217, 70, 122;
+  --particle-alpha: 0;
+  color-scheme: light;
+}
+
+[data-theme="boba"] {
+  --bg: #d9bb9b;
+  --bg-2: #ead2b8;
+  --text: #33200f;
+  --muted: #5f4230;
+  --faint: #86674f;
+  --accent: #6b3a1c;
+  --accent-2: #b0643a;
+  --ok: #2f6b37;
+  --on-accent: #fff6ea;
+  --card: rgba(243, 228, 210, 0.72);
+  --nav-bg: rgba(217, 187, 155, 0.88);
+  --glow-1: #f3dcc2;
+  --glow-2: #c49069;
+  --glow-opacity: 0.55;
+  --particle: 107, 58, 28;
+  --particle-alpha: 0;
+  color-scheme: light;
+}
+
 /* Colors derived from the tokens above (work in every theme) */
 :root {
   --surface: color-mix(in srgb, var(--text) 4%, transparent);
@@ -178,28 +238,29 @@ button { font: inherit; color: inherit; }
   to { transform: translate(80px, 60px) scale(1.08); }
 }
 
-/* Cherry Cream decorations */
-.cherries {
+/* Theme decorations (cherries, clouds, birds, bows, boba…) */
+.decor {
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
   overflow: hidden;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity .6s ease, visibility .6s;
 }
-[data-theme="cherry"] .cherries { opacity: 1; visibility: visible; }
-.cherry {
-  position: absolute;
-  transform-origin: 50% 8%;
-  animation: sway 6s ease-in-out infinite alternate;
-}
-.cherry svg { width: 100%; height: auto; }
+.decor-item { position: absolute; }
+.decor-item svg { width: 100%; height: auto; }
+.m-sway      { transform-origin: 50% 8%;  animation: sway 6s ease-in-out infinite alternate; }
+.m-sway-soft { transform-origin: 50% 100%; animation: sway-soft 5s ease-in-out infinite alternate; }
+.m-bob       { animation: bob 3.2s ease-in-out infinite alternate; }
+.m-drift     { animation: cloud-drift 14s ease-in-out infinite alternate; }
+.m-spin      { animation: spin 24s linear infinite; }
 @keyframes sway {
   from { transform: rotate(var(--r, 0deg)); }
   to   { transform: rotate(calc(var(--r, 0deg) + 7deg)); }
 }
+@keyframes sway-soft { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
+@keyframes bob { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+@keyframes cloud-drift { from { transform: translateX(-14px); } to { transform: translateX(14px); } }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ---------- Scroll progress ---------- */
 .scroll-progress {
@@ -386,6 +447,9 @@ button { font: inherit; color: inherit; }
 .sw-daylight { background: linear-gradient(135deg, #ffffff 50%, #6a4cf0 50%); }
 .sw-cherry   { background: linear-gradient(135deg, #fbf3e8 50%, #b3172e 50%); }
 .sw-mocha    { background: linear-gradient(135deg, #1d1611 50%, #dba36b 50%); }
+.sw-cloud    { background: linear-gradient(135deg, #e4f2fc 50%, #2f7fd0 50%); }
+.sw-coquette { background: linear-gradient(135deg, #fde7ee 50%, #d9467a 50%); }
+.sw-boba     { background: linear-gradient(135deg, #d9bb9b 50%, #6b3a1c 50%); }
 
 .menu-toggle {
   display: none;
@@ -791,7 +855,10 @@ button { font: inherit; color: inherit; }
   color: var(--accent-2);
 }
 [data-theme="daylight"] .work-tags span,
-[data-theme="cherry"] .work-tags span { color: var(--accent); }
+[data-theme="cherry"] .work-tags span,
+[data-theme="cloud"] .work-tags span,
+[data-theme="coquette"] .work-tags span,
+[data-theme="boba"] .work-tags span { color: var(--accent); }
 
 .process {
   margin-top: 60px;
@@ -904,6 +971,9 @@ button { font: inherit; color: inherit; }
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .field.error input, .field.error textarea { border-color: #e2576b; }
+.hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.form-note a { color: inherit; text-decoration: underline; }
+.contact-form button[disabled] { opacity: .7; cursor: wait; transform: none; }
 .form-note { margin-top: 14px; font-size: .9rem; min-height: 1.3em; text-align: center; }
 .form-note.ok { color: var(--ok); }
 .form-note.err { color: #e2576b; }
@@ -980,6 +1050,7 @@ button { font: inherit; color: inherit; }
   user-select: none;
 }
 .big-name-layer { display: block; }
+.big-name-layer.base { display: inline-block; }
 .big-name-layer.shine {
   position: absolute;
   inset: 26px 16px 0;
@@ -1024,9 +1095,8 @@ button { font: inherit; color: inherit; }
   -webkit-text-stroke: 1.5px color-mix(in srgb, var(--text) 32%, transparent);
 }
 .big-name-layer.shine .ch > span {
-  color: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: color-mix(in srgb, var(--accent) 28%, transparent);
   -webkit-text-stroke: 2px var(--accent);
-  text-shadow: 0 0 24px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
 /* ---------- Reveal animation ---------- */
@@ -1081,6 +1151,8 @@ button { font: inherit; color: inherit; }
   .process-steps { grid-template-columns: repeat(2, 1fr); row-gap: 30px; }
   .process-steps li::after { display: none; }
   .scroll-hint { display: none; }
+  .footer-cols { grid-template-columns: 1fr 1fr; }
+  .footer-cols .footer-col:first-child { grid-column: 1 / -1; }
 }
 
 @media (max-width: 600px) {
@@ -1094,7 +1166,8 @@ button { font: inherit; color: inherit; }
   .hero-actions .btn { flex: 1 1 auto; }
   .process { padding: 26px 18px; }
   .contact-form { padding: 22px; }
-  .footer-inner { flex-direction: column-reverse; text-align: center; }
+  .footer-cols { grid-template-columns: 1fr; gap: 28px; }
+  .big-name-layer.base .ch > span { -webkit-text-stroke-width: 1px; }
   .logo-text { font-size: 1rem; }
 }
 
