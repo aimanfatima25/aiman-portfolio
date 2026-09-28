@@ -145,6 +145,26 @@
   color-scheme: light;
 }
 
+[data-theme="zixy"] {
+  --bg: #110b17;
+  --bg-2: #1c1224;
+  --text: #f7eaf1;
+  --muted: #c7abbe;
+  --faint: #8d7187;
+  --accent: #f4a7c6;
+  --accent-2: #f2c7a5;
+  --ok: #9fe3c5;
+  --on-accent: #1c0f1a;
+  --card: rgba(34, 20, 38, 0.66);
+  --nav-bg: rgba(17, 11, 23, 0.82);
+  --glow-1: #7b335f;
+  --glow-2: #b85a78;
+  --glow-opacity: 0.55;
+  --particle: 255, 214, 232;
+  --particle-alpha: 0.35;
+  color-scheme: dark;
+}
+
 /* Colors derived from the tokens above (work in every theme) */
 :root {
   --surface: color-mix(in srgb, var(--text) 4%, transparent);
@@ -261,6 +281,35 @@ button { font: inherit; color: inherit; }
 @keyframes bob { from { transform: translateY(0); } to { transform: translateY(-12px); } }
 @keyframes cloud-drift { from { transform: translateX(-14px); } to { transform: translateX(14px); } }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Zixy galaxy sky: nebula + twinkling stars (fixed behind everything) */
+.galaxy {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .8s ease, visibility .8s;
+  background:
+    radial-gradient(ellipse 60% 45% at 18% 72%, rgba(214, 120, 160, .30), transparent 70%),
+    radial-gradient(ellipse 45% 35% at 80% 20%, rgba(242, 170, 190, .22), transparent 70%),
+    radial-gradient(ellipse 70% 50% at 60% 55%, rgba(120, 60, 110, .30), transparent 72%),
+    radial-gradient(circle at 20% 70%, rgba(255, 220, 235, .35), transparent 7%);
+}
+[data-theme="zixy"] .galaxy { opacity: 1; visibility: visible; }
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(255, 210, 230, .9);
+  animation: twinkle var(--tw, 3s) ease-in-out infinite alternate;
+}
+@keyframes twinkle { from { opacity: .15; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
+.m-float { animation: planet-float 9s ease-in-out infinite alternate; }
+@keyframes planet-float { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(-16px) rotate(6deg); } }
+.m-pulse { animation: pulse-star 3.5s ease-in-out infinite alternate; }
+@keyframes pulse-star { from { transform: scale(.85) rotate(0deg); opacity: .7; } to { transform: scale(1.1) rotate(20deg); opacity: 1; } }
 
 /* ---------- Scroll progress ---------- */
 .scroll-progress {
@@ -394,7 +443,7 @@ button { font: inherit; color: inherit; }
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
-  width: 200px;
+  width: 236px;
   padding: 10px;
   border-radius: 16px;
   border: 1px solid var(--border);
@@ -450,6 +499,17 @@ button { font: inherit; color: inherit; }
 .sw-cloud    { background: linear-gradient(135deg, #e4f2fc 50%, #2f7fd0 50%); }
 .sw-coquette { background: linear-gradient(135deg, #fde7ee 50%, #d9467a 50%); }
 .sw-boba     { background: linear-gradient(135deg, #d9bb9b 50%, #6b3a1c 50%); }
+.sw-zixy     { background: radial-gradient(circle at 65% 35%, #f4a7c6 0 18%, transparent 20%), radial-gradient(circle at 30% 70%, #fff 0 5%, transparent 7%), linear-gradient(135deg, #110b17, #5a2a4c); }
+.theme-opt small {
+  display: block;
+  font-family: var(--mono);
+  font-size: .58rem;
+  letter-spacing: .3px;
+  color: var(--faint);
+  font-weight: 400;
+  margin-top: 1px;
+  white-space: nowrap;
+}
 
 .menu-toggle {
   display: none;

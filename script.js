@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const themeBtn = document.getElementById("theme-btn");
   const themeMenu = document.getElementById("theme-menu");
   const themeOpts = themeMenu.querySelectorAll(".theme-opt");
-  const THEMES = ["midnight", "daylight", "cherry", "mocha", "cloud", "coquette", "boba"];
+  const THEMES = ["midnight", "daylight", "cherry", "mocha", "cloud", "coquette", "boba", "zixy"];
 
   const applyTheme = (name, save) => {
     if (!THEMES.includes(name)) name = "midnight";
@@ -154,6 +154,59 @@ document.addEventListener("DOMContentLoaded", () => {
         <ellipse cx="20" cy="63" rx="3.4" ry="2" fill="#ff9fb0" opacity=".75"/>
         <ellipse cx="44" cy="63" rx="3.4" ry="2" fill="#ff9fb0" opacity=".75"/>
         <path d="M15 36 L17 84" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".35"/>
+      </svg>`,
+
+    planetRose: `
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="pg-rose" cx="35%" cy="30%" r="75%">
+            <stop offset="0" stop-color="#f6b3c8"/><stop offset=".45" stop-color="#8f3d5e"/><stop offset="1" stop-color="#2a1022"/>
+          </radialGradient>
+          <radialGradient id="pg-rose-glow" cx="50%" cy="50%" r="50%">
+            <stop offset=".7" stop-color="#f4a7c6" stop-opacity=".35"/><stop offset="1" stop-color="#f4a7c6" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle cx="50" cy="50" r="50" fill="url(#pg-rose-glow)"/>
+        <circle cx="50" cy="50" r="36" fill="url(#pg-rose)"/>
+        <g fill="#ffd9a8" opacity=".55">
+          <circle cx="38" cy="44" r="1.4"/><circle cx="46" cy="58" r="1"/><circle cx="58" cy="40" r="1.2"/>
+          <circle cx="62" cy="62" r="1.5"/><circle cx="30" cy="56" r="1"/><circle cx="52" cy="70" r="1.1"/>
+        </g>
+        <path d="M22 44 Q50 36 78 48" fill="none" stroke="#ffc2d8" stroke-width="1.2" opacity=".35"/>
+      </svg>`,
+
+    planetDark: `
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="pg-dark" cx="30%" cy="28%" r="80%">
+            <stop offset="0" stop-color="#6b4a78"/><stop offset=".5" stop-color="#2c1a33"/><stop offset="1" stop-color="#0d0712"/>
+          </radialGradient>
+        </defs>
+        <circle cx="50" cy="50" r="38" fill="url(#pg-dark)"/>
+        <path d="M22 30 A38 38 0 0 1 60 13" fill="none" stroke="#f4b6cd" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+      </svg>`,
+
+    planetRing: `
+      <svg viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="pg-ring" cx="35%" cy="30%" r="80%">
+            <stop offset="0" stop-color="#f2c7a5"/><stop offset=".5" stop-color="#a0526c"/><stop offset="1" stop-color="#321528"/>
+          </radialGradient>
+        </defs>
+        <ellipse cx="60" cy="48" rx="56" ry="14" fill="none" stroke="#f4a7c6" stroke-width="3" opacity=".55" transform="rotate(-14 60 48)"/>
+        <circle cx="60" cy="45" r="28" fill="url(#pg-ring)"/>
+        <path d="M6 58 Q60 34 114 34" fill="none" stroke="#f4a7c6" stroke-width="3" opacity=".7" transform="rotate(-2 60 48)"/>
+      </svg>`,
+
+    sparkle: `
+      <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="pg-sp" cx="50%" cy="50%" r="50%">
+            <stop offset="0" stop-color="#fff"/><stop offset=".25" stop-color="#ffd3e4" stop-opacity=".8"/><stop offset="1" stop-color="#f4a7c6" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle cx="30" cy="30" r="28" fill="url(#pg-sp)"/>
+        <path d="M30 2 L33 27 L58 30 L33 33 L30 58 L27 33 L2 30 L27 27 Z" fill="#fff" opacity=".95"/>
       </svg>`
   };
 
@@ -162,7 +215,8 @@ document.addEventListener("DOMContentLoaded", () => {
     cherry:   [["cherry", "sway", 34, 18]],
     cloud:    [["cloud", "drift", 90, 40], ["bird", "bob", 40, 12], ["tree", "sway-soft", 58, 20], ["bird", "bob", 34, 10], ["cloud", "drift", 70, 30]],
     coquette: [["bow", "sway", 50, 16], ["flower", "spin", 34, 14]],
-    boba:     [["boba", "bob", 44, 14]]
+    boba:     [["boba", "bob", 44, 14]],
+    zixy:     [["planetRose", "float", 90, 50], ["sparkle", "pulse", 34, 16], ["planetDark", "float", 60, 30], ["planetRing", "float", 96, 30], ["sparkle", "pulse", 26, 12]]
   };
 
   // Small seeded random so the layout looks the same on every visit
@@ -185,7 +239,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const scale = small ? 0.72 : 1;
       const size = (base + rand() * extra) * scale;
       // On phones, tuck pieces half off the screen edge so they never cover text
-      const edge = small ? `${-size * 0.45}px` : (1 + rand() * 6) + "%";
+      // Big pieces (planets, clouds) peek in from the edge so they never touch the content
+      const edge = small ? `${-size * 0.45}px` : size > 70 ? `${-size * (0.25 + rand() * 0.15)}px` : (1 + rand() * 6) + "%";
       const el = document.createElement("div");
       el.className = `decor-item m-${motion}`;
       el.innerHTML = ART[art];
@@ -201,6 +256,31 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   scatterDecor();
   document.addEventListener("themechange", scatterDecor);
+
+  /* ---------- Zixy: twinkling star field ---------- */
+  const galaxy = document.getElementById("galaxy");
+  const buildStars = () => {
+    if (galaxy.childElementCount) return;
+    seed = 21;
+    const frag = document.createDocumentFragment();
+    const n = window.innerWidth < 600 ? 70 : 140;
+    for (let i = 0; i < n; i++) {
+      const st = document.createElement("span");
+      st.className = "star";
+      const size = rand() < 0.85 ? 1 + rand() * 1.4 : 2.4 + rand() * 1.4;
+      st.style.width = st.style.height = size + "px";
+      st.style.left = (rand() * 100) + "%";
+      st.style.top = (rand() * 100) + "%";
+      st.style.setProperty("--tw", (2 + rand() * 4).toFixed(1) + "s");
+      st.style.animationDelay = (-rand() * 5).toFixed(1) + "s";
+      frag.appendChild(st);
+    }
+    galaxy.appendChild(frag);
+  };
+  const maybeStars = () => { if (root.getAttribute("data-theme") === "zixy") buildStars(); };
+  maybeStars();
+  document.addEventListener("themechange", maybeStars);
+
   let ct;
   window.addEventListener("resize", () => { clearTimeout(ct); ct = setTimeout(scatterDecor, 200); });
   window.addEventListener("load", scatterDecor);
