@@ -321,7 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const target = id.length > 1 && document.querySelector(id);
       if (!target) return;
       e.preventDefault();
-      const top = target.getBoundingClientRect().top + window.scrollY - (id === "#home" ? 0 : 70);
+      const top = target.getBoundingClientRect().top + window.scrollY - (id === "#reel" ? 0 : 70);
       window.scrollTo({ top, behavior: prefersReduced ? "auto" : "smooth" });
     });
   });
@@ -331,7 +331,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const navLinks = document.querySelectorAll(".nav-link");
 
   const setActive = () => {
-    let current = "home";
+    let current = "reel";
     const mark = window.scrollY + window.innerHeight * 0.35;
     sections.forEach(s => { if (s.offsetTop <= mark) current = s.id; });
     // Reaching the page bottom always highlights Contact
