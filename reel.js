@@ -78,30 +78,51 @@ document.addEventListener("DOMContentLoaded", () => {
   if (photoSrc.complete && photoSrc.naturalWidth) loadPhoto();
   else photoSrc.addEventListener("load", loadPhoto);
 
-  /* ---------- Sound (soft synthesised pops, off by default) ---------- */
-  let audio = null, soundOn = false;
-  const pop = (freq = 660, len = 0.12, vol = 0.05, type = "sine") => {
-    if (!soundOn || !audio) return;
-    const o = audio.createOscillator(), g = audio.createGain();
-    o.type = type;
-    o.frequency.setValueAtTime(freq, audio.currentTime);
-    o.frequency.exponentialRampToValueAtTime(freq * 1.5, audio.currentTime + len);
-    g.gain.setValueAtTime(vol, audio.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + len);
-    o.connect(g).connect(audio.destination);
-    o.start(); o.stop(audio.currentTime + len);
+  /* ---------- Soundtrack (off until the viewer taps — browsers block autoplay audio) ---------- */
+  // Decoded into Web Audio (not an <audio> tag) so seeking is exact on any server
+  const soundHint = $("sound-hint");
+  let soundOn = false, actx = null, buf = null, loading = null, src = null, srcStart = 0, srcOffset = 0;
+
+  const loadMusic = () => loading || (loading = fetch("assets/reel-music.mp3")
+    .then(r => r.arrayBuffer())
+    .then(a => actx.decodeAudioData(a))
+    .then(b => { buf = b; })
+    .catch(() => { loading = null; }));
+  const stopMusic = () => {
+    if (!src) return;
+    try { src.stop(); } catch (e) {}
+    src = null;
   };
-  soundBtn.addEventListener("click", () => {
-    soundOn = !soundOn;
-    if (soundOn && !audio) {
-      try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { soundOn = false; }
-    }
-    if (audio && audio.state === "suspended") audio.resume();
-    soundBtn.setAttribute("aria-pressed", String(soundOn));
-    soundBtn.setAttribute("aria-label", soundOn ? "Turn sound off" : "Turn sound on");
-    soundBtn.textContent = soundOn ? "🔊" : "🔇";
-    pop(520);
-  });
+  const musicTime = () => (src ? actx.currentTime - srcStart + srcOffset : null);
+  const syncMusic = () => {
+    stopMusic();
+    if (!soundOn || !playing || !buf) return;
+    src = actx.createBufferSource();
+    src.buffer = buf;
+    const g = actx.createGain();   // tiny fade-in avoids a click when jumping
+    g.gain.setValueAtTime(0, actx.currentTime);
+    g.gain.linearRampToValueAtTime(1, actx.currentTime + 0.04);
+    src.connect(g).connect(actx.destination);
+    srcOffset = t / 1000;
+    srcStart = actx.currentTime;
+    src.start(0, srcOffset);
+  };
+  const setSound = (on) => {
+    soundOn = on;
+    soundBtn.setAttribute("aria-pressed", String(on));
+    soundBtn.setAttribute("aria-label", on ? "Turn sound off" : "Turn sound on");
+    soundBtn.textContent = on ? "🔊" : "🔇";
+    if (soundHint) soundHint.hidden = on;
+    if (!on) { stopMusic(); return; }
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      actx.resume();
+    } catch (e) { return; }
+    if (ended || !playing) { userPaused = false; play(); }
+    loadMusic().then(() => { if (soundOn && !src) syncMusic(); });
+  };
+  soundBtn.addEventListener("click", () => setSound(!soundOn));
+  if (soundHint) soundHint.addEventListener("click", () => setSound(true));
 
   /* ---------- Per-scene extras ---------- */
   let typeTimer = null;
@@ -113,7 +134,6 @@ document.addEventListener("DOMContentLoaded", () => {
     typeTimer = setInterval(() => {
       if (!playing) return;
       el.textContent = text.slice(0, ++i);
-      if (i % 3 === 0) pop(1600, 0.03, 0.012, "triangle");
       if (i >= text.length) clearInterval(typeTimer);
     }, 40);
   };
@@ -129,7 +149,6 @@ document.addEventListener("DOMContentLoaded", () => {
     apWord.textContent = apWords[step];
     apWord.classList.remove("flip"); void apWord.offsetWidth; apWord.classList.add("flip");
     apDots.forEach((d, i) => d.classList.toggle("hit", i <= step));
-    pop(500 + step * 110, 0.14, 0.05);
   };
 
   /* ---------- Scene list ---------- */
@@ -164,7 +183,6 @@ document.addEventListener("DOMContentLoaded", () => {
     storyScene.textContent = s.dataset.label.toLowerCase();
     rbScene.textContent = `${i + 1} / ${N} · ${s.dataset.label}`;
     progBtns.forEach((b, k) => b.classList.toggle("current", k === i));
-    if (i > 0) pop(440 + i * 40, 0.1, 0.035);
 
     const typer = s.querySelector(".type-line");
     if (typer) typeLine(typer);
@@ -191,7 +209,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const loop = (now) => {
     if (!playing) return;
-    t += Math.min(now - last, 100);   // don't jump after a background tab
+    const mt = musicTime();
+    if (mt !== null) {
+      t = mt * 1000;                   // follow the soundtrack so they never drift
+    } else {
+      t += Math.min(now - last, 100);  // don't jump after a background tab
+    }
     last = now;
     if (t >= TOTAL) { t = TOTAL - 1; render(); pause(true); return; }
     render();
@@ -206,6 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
     reel.classList.remove("paused");
     setPlayBtn("❚❚", "Pause reel");
     last = performance.now();
+    syncMusic();
     requestAnimationFrame(loop);
   };
   const pause = (finished = false) => {
@@ -213,15 +237,16 @@ document.addEventListener("DOMContentLoaded", () => {
     ended = finished;
     reel.classList.add("paused");
     setPlayBtn(finished ? "↺" : "▶", finished ? "Replay reel" : "Play reel");
+    if (!finished) stopMusic();        // at the end, let the last chord ring out
   };
   const seek = (i) => {
     t = starts[i]; current = -1; ended = false;
     render();
+    syncMusic();
   };
 
   let userPaused = false;
   playBtn.addEventListener("click", () => {
-    if (audio && audio.state === "suspended") audio.resume();
     playing ? pause() : play();
     userPaused = !playing;
   });
@@ -255,6 +280,12 @@ document.addEventListener("DOMContentLoaded", () => {
       else if (inView && !playing && !userPaused && !ended) play();
     }, { threshold: 0.35 }).observe(reel);
   }
+
+  // Switching tabs: rAF stops but audio wouldn't, so pause both together
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && playing) pause();
+    else if (!document.hidden && inView && !userPaused && !ended && !prefersReduced) play();
+  });
 
   // "Replay the reel" links start it again from scene one
   document.querySelectorAll(".replay-link").forEach(a => a.addEventListener("click", () => {

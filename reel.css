@@ -98,6 +98,33 @@
   font-weight: 500;
 }
 
+/* "tap for sound" invite */
+.sound-hint {
+  position: absolute;
+  left: 50%; bottom: 18px;
+  z-index: 9;
+  translate: -50% 0;
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 10px 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  backdrop-filter: blur(12px);
+  color: var(--text);
+  font: 600 .86rem var(--font);
+  cursor: pointer;
+  box-shadow: 0 0 0 0 var(--accent-soft);
+  animation: rl-ping 2.2s ease-out infinite;
+}
+.sound-hint[hidden] { display: none; }
+.sound-hint:hover { border-color: var(--accent); }
+.eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+.eq i { width: 3px; height: 100%; border-radius: 2px; background: var(--accent); animation: rl-eq 1s ease-in-out infinite; }
+.eq i:nth-child(2) { animation-delay: -.35s; }
+.eq i:nth-child(3) { animation-delay: -.7s; }
+@keyframes rl-ping { 70%, 100% { box-shadow: 0 0 0 14px transparent; } 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } }
+@keyframes rl-eq { 0%, 100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
+
 /* ---------- Scenes ---------- */
 .scene {
   position: absolute; inset: 0;

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css?v=4" />
-  <link rel="stylesheet" href="reel.css?v=4" />
+  <link rel="stylesheet" href="reel.css?v=5" />
   <!-- Apply the saved theme before the page paints (prevents a flash) -->
   <script>
     try {
@@ -95,6 +95,9 @@
             <span class="story-live"><span class="pulse-dot"></span> open to work</span>
           </div>
         </div>
+
+        <!-- Browsers block autoplaying audio, so invite a tap -->
+        <button class="sound-hint" id="sound-hint" type="button"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span> tap for sound</button>
 
         <!-- 01 · Intro -->
         <div class="scene sc-intro" data-label="Intro" data-dur="3000">
@@ -650,6 +653,6 @@
   </footer>
 
   <script src="script.js"></script>
-  <script src="reel.js?v=2"></script>
+  <script src="reel.js?v=6"></script>
 </body>
 </html>
