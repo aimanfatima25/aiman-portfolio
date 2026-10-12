@@ -8,6 +8,12 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ---------- Footer year ---------- */
   document.getElementById("year").textContent = new Date().getFullYear();
 
+  /* ---------- Footer: say where this copy is hosted ---------- */
+  // Same code deploys to aimanfatima.com (Coolify) and *.vercel.app (Vercel)
+  if (location.hostname.endsWith(".vercel.app")) {
+    document.getElementById("hosted-on").textContent = "Deployed on Vercel.";
+  }
+
   /* ---------- Theme switcher ---------- */
   const root = document.documentElement;
   const themeBtn = document.getElementById("theme-btn");
