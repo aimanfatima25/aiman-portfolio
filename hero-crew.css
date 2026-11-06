@@ -1,0 +1,128 @@
+/* =========================================
+   Giant particle name + flying cursor crew
+   All colours come from the active theme.
+   ========================================= */
+
+/* ---------- Hero layout ---------- */
+.hero.word-hero {
+  display: block;
+  min-height: 0;
+  padding: calc(84px + var(--word-h, 22vw)) 0 70px;
+  overflow: hidden;
+}
+.word-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.word-hero .hero-inner {
+  position: relative;
+  grid-template-columns: minmax(0, 1fr) 270px minmax(0, 340px);
+  gap: 40px;
+  align-items: start;
+}
+.word-hero .hero-title { font-size: clamp(1.9rem, 3.2vw, 2.7rem); letter-spacing: -1px; }
+.word-hero .hero-title .accent-text { font-size: 1em; }
+.word-hero .hero-desc { font-size: 1rem; margin-bottom: 26px; }
+.word-hero .hero-actions { margin-bottom: 22px; }
+.word-hero .eyebrow { margin-bottom: 18px; }
+.word-hero .scroll-hint { display: none; }
+
+/* ---------- Photo card: tinted by the theme, rises into the name ---------- */
+.word-photo {
+  margin-top: calc(var(--word-h, 22vw) * -0.34);
+  aspect-ratio: 4 / 5;
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--grad);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow);
+}
+.word-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 12%;
+  mix-blend-mode: luminosity;
+}
+
+/* ---------- Cursor crew ---------- */
+.cursor-crew {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  z-index: 90;
+  pointer-events: none;
+  transition: opacity .35s ease;
+}
+.cursor-crew.off { opacity: 0; }
+
+.crew-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: transform var(--fly, 1.2s) cubic-bezier(.65, .05, .25, 1);
+  will-change: transform;
+}
+.crew-cursor svg {
+  width: 22px;
+  height: 22px;
+  fill: var(--c);
+  stroke: var(--bg);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .35));
+}
+.crew-tag {
+  position: absolute;
+  top: 19px;
+  left: 15px;
+  padding: 3px 9px;
+  border-radius: 7px;
+  background: var(--c);
+  color: var(--on-accent);
+  font-family: var(--mono);
+  font-size: .68rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.crew-box {
+  position: absolute;
+  border: 1.5px solid var(--c);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--c) 8%, transparent);
+  opacity: 0;
+  clip-path: inset(0 100% 100% 0);
+  transition: clip-path .5s var(--ease), opacity .3s ease;
+}
+.crew-box.on { opacity: 1; clip-path: inset(-6px); }
+.crew-box::before,
+.crew-box::after {
+  content: "";
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  background: var(--bg);
+  border: 1.5px solid var(--c);
+}
+.crew-box::before { top: -4px; left: -4px; }
+.crew-box::after { bottom: -4px; right: -4px; }
+
+/* ---------- Tablet and phone ---------- */
+@media (max-width: 1024px) {
+  .word-hero .hero-inner { grid-template-columns: minmax(0, 1fr) 240px; }
+  .word-hero .hero-visual { grid-column: 1 / -1; }
+}
+@media (max-width: 860px) {
+  .hero.word-hero { padding-top: calc(76px + var(--word-h, 22vw)); }
+  .word-hero .hero-inner { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .word-photo {
+    grid-row: 1;
+    width: min(56vw, 220px);
+    margin: calc(var(--word-h, 22vw) * -0.2) auto 0;
+  }
+}
