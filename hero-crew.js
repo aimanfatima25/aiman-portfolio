@@ -172,19 +172,63 @@ document.addEventListener("DOMContentLoaded", () => {
     ".big-name"
   ].join(",");
 
+  // Short headings only, so nobody loses a paragraph they are reading
+  const TYPE_TARGETS = ".hero-title, .section-title, .work-card h3, .skill-card h3, .platform-card h3, .ship-card h3";
+
   const taken = new Set();
   let reelInView = false;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const paused = () => reelInView || document.hidden;
 
-  const pickTarget = () => {
+  const pickTarget = selector => {
     const vh = window.innerHeight;
-    const options = [...document.querySelectorAll(TARGETS)].filter(el => {
+    const options = [...document.querySelectorAll(selector)].filter(el => {
       if (taken.has(el)) return false;
+      const reveal = el.closest(".reveal");
+      if (reveal && !reveal.classList.contains("visible")) return false;
       const r = el.getBoundingClientRect();
       return r.width > 0 && r.top > 70 && r.bottom < vh && r.width < window.innerWidth * 0.9;
     });
     return options[Math.floor(Math.random() * options.length)] || null;
+  };
+
+  // Hide a heading's letters without moving the layout. Returns a function that restores it.
+  const hideLetters = el => {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) if (walker.currentNode.nodeValue.trim()) nodes.push(walker.currentNode);
+
+    const letters = [];
+    const wrappers = nodes.map(node => {
+      const wrapper = document.createElement("span");
+      wrapper.style.display = "contents";
+      for (const part of node.nodeValue.split(/(\s+)/)) {
+        if (!part) continue;
+        if (/^\s+$/.test(part)) { wrapper.append(part); continue; }
+        const word = document.createElement("span");
+        word.className = "crew-word";
+        for (const ch of part) {
+          const letter = document.createElement("span");
+          letter.className = "crew-letter";
+          letter.textContent = ch;
+          word.append(letter);
+          letters.push(letter);
+        }
+        wrapper.append(word);
+      }
+      node.replaceWith(wrapper);
+      return [wrapper, node];
+    });
+    return { letters, restore: () => wrappers.forEach(([wrapper, node]) => wrapper.replaceWith(node)) };
+  };
+
+  const typeLetters = async letters => {
+    const delay = Math.max(16, Math.min(40, 1000 / letters.length));
+    for (const letter of letters) {
+      letter.classList.add("shown", "caret");
+      await sleep(delay);
+      letter.classList.remove("caret");
+    }
   };
 
   const launch = async (member, index) => {
@@ -209,28 +253,61 @@ document.addEventListener("DOMContentLoaded", () => {
 
     while (true) {
       if (paused()) { await sleep(500); continue; }
-      const target = pickTarget();
-      if (!target) { await sleep(900); continue; }
+      const writes = Math.random() < 0.45;
+      const target = (writes && pickTarget(TYPE_TARGETS)) || pickTarget(TARGETS);
+      if (!target) { await sleep(600); continue; }
       taken.add(target);
+      const typing = target.matches(TYPE_TARGETS) && writes;
 
       const r = target.getBoundingClientRect();
-      const x = Math.min(r.right - 14 + window.scrollX, maxX());
-      const y = r.bottom - 12 + window.scrollY;
-      const fly = 900 + Math.random() * 800;
-      moveTo(x, y, fly);
-      await sleep(fly);
+      if (typing) {
+        // Fly to the top-left corner, drag the box open, then the text writes itself in
+        const left = r.left + window.scrollX - 6, top = r.top + window.scrollY - 6;
+        const fly = 450 + Math.random() * 400;
+        moveTo(Math.min(left - 4, maxX()), top - 2, fly);
+        await sleep(fly);
 
-      const now = target.getBoundingClientRect();
-      box.style.left = now.left + window.scrollX - 6 + "px";
-      box.style.top = now.top + window.scrollY - 6 + "px";
-      box.style.width = now.width + 12 + "px";
-      box.style.height = now.height + 12 + "px";
-      box.classList.add("on");
-      await sleep(1300 + Math.random() * 900);
+        const hidden = hideLetters(target);
+        const drag = 450 + Math.random() * 200;
+        box.classList.add("drag");
+        box.style.setProperty("--fly", drag + "ms");
+        box.style.left = left + "px";
+        box.style.top = top + "px";
+        box.style.width = "0px";
+        box.style.height = "0px";
+        box.classList.add("on");
+        void box.offsetWidth;
+        box.style.width = r.width + 12 + "px";
+        box.style.height = r.height + 12 + "px";
+        moveTo(Math.min(left + r.width + 8, maxX()), top + r.height + 10, drag);
+        await sleep(drag + 80);
 
-      box.classList.remove("on");
+        await typeLetters(hidden.letters);
+        hidden.restore();
+        await sleep(450);
+
+        box.classList.remove("on");
+        await sleep(300);
+        box.classList.remove("drag");
+      } else {
+        const x = Math.min(r.right - 14 + window.scrollX, maxX());
+        const y = r.bottom - 12 + window.scrollY;
+        const fly = 450 + Math.random() * 450;
+        moveTo(x, y, fly);
+        await sleep(fly);
+
+        const now = target.getBoundingClientRect();
+        box.style.left = now.left + window.scrollX - 6 + "px";
+        box.style.top = now.top + window.scrollY - 6 + "px";
+        box.style.width = now.width + 12 + "px";
+        box.style.height = now.height + 12 + "px";
+        box.classList.add("on");
+        await sleep(650 + Math.random() * 600);
+        box.classList.remove("on");
+      }
+
       taken.delete(target);
-      await sleep(250 + Math.random() * 700);
+      await sleep(100 + Math.random() * 300);
     }
   };
 

@@ -30,13 +30,12 @@
 .word-hero .eyebrow { margin-bottom: 18px; }
 .word-hero .scroll-hint { display: none; }
 
-/* ---------- Photo card: tinted by the theme, rises into the name ---------- */
+/* ---------- Photo card: real colours, framed by the theme, rises into the name ---------- */
 .word-photo {
   margin-top: calc(var(--word-h, 22vw) * -0.34);
   aspect-ratio: 4 / 5;
   border-radius: 22px;
   overflow: hidden;
-  background: var(--grad);
   border: 1px solid var(--border-strong);
   box-shadow: var(--shadow);
 }
@@ -45,7 +44,6 @@
   height: 100%;
   object-fit: cover;
   object-position: 50% 12%;
-  mix-blend-mode: luminosity;
 }
 
 /* ---------- Cursor crew ---------- */
@@ -111,6 +109,19 @@
 }
 .crew-box::before { top: -4px; left: -4px; }
 .crew-box::after { bottom: -4px; right: -4px; }
+
+/* Dragged open by a cursor, then the text writes itself in */
+.crew-box.drag {
+  clip-path: none;
+  transition:
+    width var(--fly, .5s) cubic-bezier(.65, .05, .25, 1),
+    height var(--fly, .5s) cubic-bezier(.65, .05, .25, 1),
+    opacity .3s ease;
+}
+.crew-word { display: inline-block; }
+.crew-letter { visibility: hidden; }
+.crew-letter.shown { visibility: visible; }
+.crew-letter.caret { box-shadow: 2px 0 0 var(--accent); }
 
 /* ---------- Tablet and phone ---------- */
 @media (max-width: 1024px) {
