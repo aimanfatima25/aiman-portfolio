@@ -156,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (prefersReduced) return;
 
   const crewEl = document.createElement("div");
-  crewEl.className = "cursor-crew";
+  crewEl.className = reel ? "cursor-crew off" : "cursor-crew";
   crewEl.setAttribute("aria-hidden", "true");
   document.body.appendChild(crewEl);
 
@@ -176,7 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const TYPE_TARGETS = ".hero-title, .section-title, .work-card h3, .skill-card h3, .platform-card h3, .ship-card h3";
 
   const taken = new Set();
-  let reelInView = false;
+  let reelInView = !!reel; // stay hidden until the observer has reported on the reel
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const paused = () => reelInView || document.hidden;
 

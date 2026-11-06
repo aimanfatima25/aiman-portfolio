@@ -704,6 +704,12 @@
 @keyframes rl-breathe { 50% { transform: scale(1.06); } }
 
 /* ---------- Responsive ---------- */
+/* Short windows (or a zoomed-in browser): shrink the scenes so nothing overlaps or gets cut off */
+@media (min-width: 861px) and (max-height: 760px) { .scene { zoom: .84; } }
+@media (min-width: 861px) and (max-height: 680px) { .scene { zoom: .76; } }
+@media (min-width: 861px) and (max-height: 600px) { .scene { zoom: .68; } }
+@media (min-width: 861px) and (max-height: 520px) { .scene { zoom: .58; } }
+
 @media (max-width: 860px) {
   .reel { padding: 76px 10px 0; }
   .reel-stage { height: calc(100svh - 76px - var(--bar-h)); border-radius: 24px; }

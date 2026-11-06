@@ -1168,8 +1168,12 @@ button { font: inherit; color: inherit; }
 .reveal.visible { opacity: 1; transform: none; }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 1180px) {
+@media (max-width: 1320px) {
   .status-pill { display: none; }
+}
+/* Just before the menu button appears, the full nav only fits without the name */
+@media (min-width: 861px) and (max-width: 960px) {
+  .logo-text { display: none; }
 }
 
 @media (max-width: 1024px) {
