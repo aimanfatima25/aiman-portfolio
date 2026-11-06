@@ -66,6 +66,7 @@
   transition: transform var(--fly, 1.2s) cubic-bezier(.65, .05, .25, 1);
   will-change: transform;
 }
+.crew-cursor.gliding { transition-timing-function: linear; }
 .crew-cursor svg {
   width: 22px;
   height: 22px;
@@ -76,6 +77,9 @@
 }
 .crew-tag {
   position: absolute;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   top: 19px;
   left: 15px;
   padding: 3px 9px;

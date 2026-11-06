@@ -187,6 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const MAX_TYPING = 1;
   const lastTyped = new Map();
   const lastVisited = new Map();
+  const lastTypedGroup = new Map();
 
   // A heading and its subtitle, or a card and its title, count as one thing: one cursor at a time
   const GROUPS = ".section-head, .work-card, .skill-card, .platform-card, .ship-card, .mini-card, .tool, .flow-card";
@@ -230,18 +231,36 @@ document.addEventListener("DOMContentLoaded", () => {
     return stillOn(target);
   };
 
-  const pickTarget = (selector, typing) => {
+  const labelFor = (el, fallback) => {
+    if (el.matches(".word-photo")) return "Aiman";
+    if (el.matches(".flow-card")) return "workflow.run";
+    const named = el.getAttribute("aria-label");
+    const heading = el.matches("h1, h2, h3, h4, strong") ? el : el.querySelector("h1, h2, h3, h4, strong");
+    const text = (named || (heading || el).textContent).replace(/[↗→]/g, "").trim().replace(/\s+/g, " ");
+    if (!text) return fallback;
+    if (text.length <= 24) return text;
+    return text.slice(0, 24).replace(/\s+\S*$/, "") + "…";
+  };
+
+  const pickTarget = (selector, typing, revisit) => {
     const vh = window.innerHeight;
     const now = performance.now();
     const options = [...document.querySelectorAll(selector)].filter(el => {
       const group = groupOf(el);
       if (taken.has(group)) return false;
-      if (now - (lastVisited.get(group) ?? -REVISIT_AFTER) < REVISIT_AFTER) return false;
+      // A heading someone just typed stays untouched while it is being read
+      if (now - (lastVisited.get(group) ?? -REVISIT_AFTER) < (revisit ? 0 : REVISIT_AFTER)) return false;
+      if (revisit && now - (lastTypedGroup.get(group) ?? -RETYPE_AFTER) < REVISIT_AFTER) return false;
       if (typing && now - (lastTyped.get(el) ?? -RETYPE_AFTER) < RETYPE_AFTER) return false;
       if (!hasLanded(el)) return false;
       const r = rectOf(el);
       return r.width > 0 && r.top > 70 && r.bottom < vh && r.width < window.innerWidth * 0.9;
     });
+    if (revisit) {
+      // Everything was visited recently: go to whichever has waited longest
+      options.sort((a, b) => (lastVisited.get(groupOf(a)) ?? 0) - (lastVisited.get(groupOf(b)) ?? 0));
+      return options[0] || null;
+    }
     return options[Math.floor(Math.random() * options.length)] || null;
   };
 
@@ -292,6 +311,8 @@ document.addEventListener("DOMContentLoaded", () => {
     el.style.setProperty("--c", `var(${member.color})`);
     el.innerHTML = `<svg viewBox="0 0 24 24"><path d="M4 2l16 9.5-7 1.8L9.8 21z"/></svg><span class="crew-tag">${member.name}</span>`;
 
+    const tag = el.querySelector(".crew-tag");
+
     const box = document.createElement("div");
     box.className = "crew-box";
     box.style.setProperty("--c", `var(${member.color})`);
@@ -311,7 +332,8 @@ document.addEventListener("DOMContentLoaded", () => {
       moveTo(curX, curY <= top ? top + 70 : top + h - 10, 0);
       void el.offsetWidth;
     };
-    const maxX = () => document.documentElement.clientWidth - 90;
+    // Leave room so a long box name is never cut off at the screen edge
+    const maxX = () => document.documentElement.clientWidth - tag.offsetWidth - 34;
 
     // Keep the box glued to its target, even if a card lifts on hover
     let sized = false;
@@ -337,14 +359,21 @@ document.addEventListener("DOMContentLoaded", () => {
       if (paused()) { await sleep(200); continue; }
       const writes = typingNow < MAX_TYPING && Math.random() < 0.45;
       const typeTarget = writes ? pickTarget(TYPE_TARGETS, true) : null;
-      const target = typeTarget || pickTarget(TARGETS);
+      const target = typeTarget || pickTarget(TARGETS) || pickTarget(TARGETS, false, true);
       if (!target) {
-        // Nothing free to work on here: hover nearby rather than staying off screen
+        // No box free right now: keep crossing the screen instead of stopping in empty space
         rejoin();
-        moveTo(Math.random() * maxX(), window.scrollY + 90 + Math.random() * (window.innerHeight - 180), 320);
-        await sleep(800);
+        el.classList.add("gliding");
+        tag.textContent = member.name;
+        const toX = curX < maxX() / 2 ? maxX() * (0.7 + Math.random() * 0.3) : maxX() * Math.random() * 0.3;
+        const toY = window.scrollY + 90 + Math.random() * (window.innerHeight - 180);
+        const glide = Math.max(600, Math.hypot(toX - curX, toY - curY) * 1.2);
+        moveTo(toX, toY, glide);
+        await sleep(glide);
         continue;
       }
+      el.classList.remove("gliding");
+      tag.textContent = labelFor(target, member.name);
       const group = groupOf(target);
       taken.add(group);
       rejoin();
@@ -359,6 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (await hold(fly, target)) {
           lastTyped.set(target, performance.now());
+          lastTypedGroup.set(group, performance.now());
           r = rectOf(target);
           const hidden = hideLetters(target);
           const drag = 320 + Math.random() * 140;
