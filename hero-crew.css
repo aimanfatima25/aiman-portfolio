@@ -123,6 +123,38 @@
 .crew-letter.shown { visibility: visible; }
 .crew-letter.caret { box-shadow: 2px 0 0 var(--accent); }
 
+/* ---------- Finale: drone train that flies a heart or flower ---------- */
+.swarm {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  z-index: 90;
+  pointer-events: none;
+  transition: opacity .4s ease;
+}
+.swarm.leaving { opacity: 0; }
+.swarm-bee {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transition: opacity .25s ease;
+  will-change: transform;
+}
+.swarm-bee.on { opacity: 1; }
+.swarm-bee svg {
+  width: 22px;
+  height: 22px;
+  fill: var(--c);
+  stroke: var(--bg);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 55%, transparent));
+}
+.swarm-bee .crew-tag { top: 10px; left: 10px; transition: opacity .5s ease; }
+.swarm.formed .crew-tag { opacity: 0; }
+
 /* ---------- Tablet and phone ---------- */
 @media (max-width: 1024px) {
   .word-hero .hero-inner { grid-template-columns: minmax(0, 1fr) 240px; }

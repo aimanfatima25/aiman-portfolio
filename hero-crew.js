@@ -168,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ];
   const TARGETS = [
     ".hero-title", ".hero-actions .btn", ".flow-card", ".node", ".word-photo",
-    ".section h2", ".mini-card", ".skill-card", ".ship-card", ".platform-card", ".work-card",
+    ".section h2", ".section-sub", ".tool", ".mini-card", ".skill-card", ".ship-card", ".platform-card", ".work-card",
     ".big-name"
   ].join(",");
 
@@ -178,12 +178,37 @@ document.addEventListener("DOMContentLoaded", () => {
   const taken = new Set();
   let reelInView = !!reel; // stay hidden until the observer has reported on the reel
   const sleep = ms => new Promise(r => setTimeout(r, ms));
-  const paused = () => reelInView || document.hidden;
+  let finaleOn = false;
+  const paused = () => reelInView || finaleOn || document.hidden;
+  const syncCrew = () => crewEl.classList.toggle("off", reelInView || finaleOn);
 
-  const pickTarget = selector => {
+  const RETYPE_AFTER = 30000;
+  const MAX_TYPING = 2;
+  const lastTyped = new Map();
+  let typingNow = 0;
+
+  const inView = el => {
+    const r = el.getBoundingClientRect();
+    return r.bottom > 70 && r.top < window.innerHeight;
+  };
+  const stillOn = target => inView(target) && !paused();
+
+  // Wait, but stop early the moment the visitor scrolls the target away
+  const hold = async (ms, target) => {
+    const end = performance.now() + ms;
+    while (performance.now() < end) {
+      if (!stillOn(target)) return false;
+      await sleep(Math.min(40, end - performance.now()));
+    }
+    return stillOn(target);
+  };
+
+  const pickTarget = (selector, typing) => {
     const vh = window.innerHeight;
+    const now = performance.now();
     const options = [...document.querySelectorAll(selector)].filter(el => {
       if (taken.has(el)) return false;
+      if (typing && now - (lastTyped.get(el) ?? -RETYPE_AFTER) < RETYPE_AFTER) return false;
       const reveal = el.closest(".reveal");
       if (reveal && !reveal.classList.contains("visible")) return false;
       const r = el.getBoundingClientRect();
@@ -222,13 +247,15 @@ document.addEventListener("DOMContentLoaded", () => {
     return { letters, restore: () => wrappers.forEach(([wrapper, node]) => wrapper.replaceWith(node)) };
   };
 
-  const typeLetters = async letters => {
-    const delay = Math.max(16, Math.min(40, 1000 / letters.length));
+  const typeLetters = async (letters, target) => {
+    const delay = Math.max(18, Math.min(38, 900 / letters.length));
     for (const letter of letters) {
+      if (!stillOn(target)) return false;
       letter.classList.add("shown", "caret");
       await sleep(delay);
       letter.classList.remove("caret");
     }
+    return true;
   };
 
   const launch = async (member, index) => {
@@ -242,9 +269,19 @@ document.addEventListener("DOMContentLoaded", () => {
     box.style.setProperty("--c", `var(${member.color})`);
     crewEl.append(box, el);
 
+    let curX = 0, curY = 0;
     const moveTo = (x, y, ms) => {
+      curX = x;
+      curY = y;
       el.style.setProperty("--fly", ms + "ms");
       el.style.transform = `translate(${x}px, ${y}px)`;
+    };
+    // Left behind by a scroll: rejoin from the nearest screen edge instead of crossing the whole page
+    const rejoin = () => {
+      const top = window.scrollY, h = window.innerHeight;
+      if (curY > top && curY < top + h) return;
+      moveTo(curX, curY <= top ? top + 70 : top + h - 10, 0);
+      void el.offsetWidth;
     };
     const maxX = () => document.documentElement.clientWidth - 90;
 
@@ -252,64 +289,337 @@ document.addEventListener("DOMContentLoaded", () => {
     await sleep(index * 700);
 
     while (true) {
-      if (paused()) { await sleep(500); continue; }
-      const writes = Math.random() < 0.45;
-      const target = (writes && pickTarget(TYPE_TARGETS)) || pickTarget(TARGETS);
-      if (!target) { await sleep(600); continue; }
+      if (paused()) { await sleep(200); continue; }
+      const writes = typingNow < MAX_TYPING && Math.random() < 0.45;
+      const typeTarget = writes ? pickTarget(TYPE_TARGETS, true) : null;
+      const target = typeTarget || pickTarget(TARGETS);
+      if (!target) {
+        // Nothing free to work on here: hover nearby rather than staying off screen
+        rejoin();
+        moveTo(Math.random() * maxX(), window.scrollY + 90 + Math.random() * (window.innerHeight - 180), 320);
+        await sleep(650);
+        continue;
+      }
       taken.add(target);
-      const typing = target.matches(TYPE_TARGETS) && writes;
+      rejoin();
 
       const r = target.getBoundingClientRect();
-      if (typing) {
-        // Fly to the top-left corner, drag the box open, then the text writes itself in
+      if (typeTarget) {
+        // Fly to the top-left corner, drag the box open, write the text in, then let it be read
         const left = r.left + window.scrollX - 6, top = r.top + window.scrollY - 6;
-        const fly = 450 + Math.random() * 400;
+        const fly = 260 + Math.random() * 220;
         moveTo(Math.min(left - 4, maxX()), top - 2, fly);
-        await sleep(fly);
 
-        const hidden = hideLetters(target);
-        const drag = 450 + Math.random() * 200;
-        box.classList.add("drag");
-        box.style.setProperty("--fly", drag + "ms");
-        box.style.left = left + "px";
-        box.style.top = top + "px";
-        box.style.width = "0px";
-        box.style.height = "0px";
-        box.classList.add("on");
-        void box.offsetWidth;
-        box.style.width = r.width + 12 + "px";
-        box.style.height = r.height + 12 + "px";
-        moveTo(Math.min(left + r.width + 8, maxX()), top + r.height + 10, drag);
-        await sleep(drag + 80);
+        if (await hold(fly, target)) {
+          typingNow++;
+          lastTyped.set(target, performance.now());
+          const hidden = hideLetters(target);
+          const drag = 320 + Math.random() * 140;
+          box.classList.add("drag");
+          box.style.setProperty("--fly", drag + "ms");
+          box.style.left = left + "px";
+          box.style.top = top + "px";
+          box.style.width = "0px";
+          box.style.height = "0px";
+          box.classList.add("on");
+          void box.offsetWidth;
+          box.style.width = r.width + 12 + "px";
+          box.style.height = r.height + 12 + "px";
+          moveTo(Math.min(left + r.width + 8, maxX()), top + r.height + 10, drag);
 
-        await typeLetters(hidden.letters);
-        hidden.restore();
-        await sleep(450);
+          const typed = (await hold(drag + 60, target)) && (await typeLetters(hidden.letters, target));
+          hidden.restore();
+          typingNow--;
+          if (typed) await hold(Math.min(4500, 1500 + hidden.letters.length * 60), target);
 
-        box.classList.remove("on");
-        await sleep(300);
-        box.classList.remove("drag");
+          box.classList.remove("on");
+          await sleep(180);
+          box.classList.remove("drag");
+        }
       } else {
         const x = Math.min(r.right - 14 + window.scrollX, maxX());
         const y = r.bottom - 12 + window.scrollY;
-        const fly = 450 + Math.random() * 450;
+        const fly = 260 + Math.random() * 240;
         moveTo(x, y, fly);
-        await sleep(fly);
 
-        const now = target.getBoundingClientRect();
-        box.style.left = now.left + window.scrollX - 6 + "px";
-        box.style.top = now.top + window.scrollY - 6 + "px";
-        box.style.width = now.width + 12 + "px";
-        box.style.height = now.height + 12 + "px";
-        box.classList.add("on");
-        await sleep(650 + Math.random() * 600);
-        box.classList.remove("on");
+        if (await hold(fly, target)) {
+          const now = target.getBoundingClientRect();
+          box.style.left = now.left + window.scrollX - 6 + "px";
+          box.style.top = now.top + window.scrollY - 6 + "px";
+          box.style.width = now.width + 12 + "px";
+          box.style.height = now.height + 12 + "px";
+          box.classList.add("on");
+          await hold(600 + Math.random() * 500, target);
+          box.classList.remove("on");
+        }
       }
 
       taken.delete(target);
-      await sleep(100 + Math.random() * 300);
+      await sleep(60 + Math.random() * 160);
     }
   };
+
+  /* ---------- Finale: a drone train that flies a shape (heart at Contact, flower at the bottom) ---------- */
+  const clamp01 = v => Math.max(0, Math.min(1, v));
+  const easeInOut = t => 0.5 - Math.cos(Math.PI * t) / 2;
+
+  const buildContour = (type, cx, cy, size) => {
+    const pts = [];
+    const STEPS = 260;
+    for (let i = 0; i <= STEPS; i++) {
+      const a = (i / STEPS) * Math.PI * 2;
+      if (type === "heart") {
+        const k = size / 34;
+        const f = 13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a);
+        pts.push([cx + k * 16 * Math.sin(a) ** 3, cy - k * (f + 2.5)]);
+      } else {
+        // Five round petals with no inner crossings
+        const r = (size / 2) * (0.56 + 0.44 * Math.abs(Math.cos(2.5 * a)));
+        pts.push([cx + r * Math.sin(a), cy - r * Math.cos(a)]);
+      }
+    }
+    return pts;
+  };
+
+  const makePath = pts => {
+    const cum = [0];
+    for (let i = 1; i < pts.length; i++) {
+      cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    }
+    const at = d => {
+      const dist = Math.max(0, Math.min(cum[cum.length - 1], d));
+      let lo = 0, hi = cum.length - 1;
+      while (hi - lo > 1) {
+        const mid = (lo + hi) >> 1;
+        if (cum[mid] <= dist) lo = mid; else hi = mid;
+      }
+      const f = (dist - cum[lo]) / (cum[hi] - cum[lo] || 1);
+      return [pts[lo][0] + (pts[hi][0] - pts[lo][0]) * f, pts[lo][1] + (pts[hi][1] - pts[lo][1]) * f];
+    };
+    return { at, length: cum[cum.length - 1] };
+  };
+
+  // A flower keeps a few drones back to make its middle
+  const slotsFor = (contour, count, zone) => {
+    const path = makePath(contour);
+    const middle = zone.type === "flower" ? 6 : 0;
+    const ring = count - middle;
+    return Array.from({ length: count }, (_, i) => {
+      if (i < ring) return path.at(path.length - (i * path.length) / ring);
+      const a = ((i - ring) / middle) * Math.PI * 2;
+      const r = zone.size * 0.1;
+      return [zone.cx + r * Math.cos(a), zone.cy + r * Math.sin(a)];
+    });
+  };
+
+  const anchorFor = type => {
+    const sx = window.scrollX, sy = window.scrollY;
+    if (type === "flower") {
+      const col = document.querySelector(".footer-col:last-child");
+      if (!col) return null;
+      const r = col.getBoundingClientRect();
+      const linksRight = Math.max(...[...col.querySelectorAll("a")].map(a => a.getBoundingClientRect().right));
+      const size = Math.min(170, Math.max(90, r.right - linksRight - 16));
+      return { cx: r.right - size / 2 + sx, cy: r.top + r.height / 2 + sy, size };
+    }
+    const links = document.querySelector(".contact-links");
+    const form = document.querySelector(".contact-form");
+    if (!links || !form) return null;
+    const r = links.getBoundingClientRect();
+    const last = links.lastElementChild.getBoundingClientRect();
+    const free = r.bottom - last.bottom - 24;
+    if (free >= 110) {
+      const size = Math.min(170, free);
+      return { cx: r.left + r.width / 2 + sx, cy: last.bottom + 12 + free / 2 + sy, size };
+    }
+    // One column (phones): the gap under the form
+    const f = form.getBoundingClientRect();
+    return { cx: f.left + f.width / 2 + sx, cy: f.bottom + 48 + sy, size: 72 };
+  };
+
+  const zoneNow = () => {
+    const vh = window.innerHeight;
+    for (const type of ["flower", "heart"]) {
+      const a = anchorFor(type);
+      if (!a) continue;
+      const y = a.cy - window.scrollY;
+      if (y - a.size / 2 > 64 && y + a.size / 2 < vh) return { type, ...a };
+    }
+    return null;
+  };
+
+  let swarm = null;
+
+  const startSwarm = zone => {
+    const contour = buildContour(zone.type, zone.cx, zone.cy, zone.size);
+    const loop = makePath(contour);
+    const count = Math.max(12, Math.min(30, Math.round(loop.length / 21)));
+    const scale = Math.max(0.55, Math.min(1, zone.size / 150));
+
+    const lead = crewEl.querySelector(".crew-cursor").getBoundingClientRect();
+    const onScreen = lead.top > 0 && lead.bottom < window.innerHeight;
+    const startX = onScreen ? lead.left + window.scrollX : document.documentElement.clientWidth + 20;
+    const startY = onScreen ? lead.top + window.scrollY : window.scrollY + window.innerHeight * 0.4;
+
+    // Swoop in from wherever the leader was, then go once around the shape
+    const [endX, endY] = contour[0];
+    const midX = (startX + endX) / 2 + (endY - startY) * 0.25;
+    const midY = (startY + endY) / 2 - (endX - startX) * 0.25;
+    const approach = [];
+    for (let i = 0; i < 80; i++) {
+      const t = i / 80, u = 1 - t;
+      approach.push([u * u * startX + 2 * u * t * midX + t * t * endX, u * u * startY + 2 * u * t * midY + t * t * endY]);
+    }
+    const route = makePath([...approach, ...contour]);
+
+    const layer = document.createElement("div");
+    layer.className = "swarm";
+    layer.setAttribute("aria-hidden", "true");
+    document.body.appendChild(layer);
+
+    // The named crew are spread evenly along the train; everyone else is a small drone
+    const named = window.innerWidth <= 600 ? CREW.slice(0, 2) : CREW;
+    const tones = ["--accent", "--accent-2"];
+    const namedAt = new Map(named.map((m, n) => [Math.round((n / named.length) * count), m]));
+    const bees = Array.from({ length: count }, (_, i) => {
+      const member = namedAt.get(i);
+      const el = document.createElement("div");
+      el.className = "swarm-bee";
+      el.style.setProperty("--c", member ? `var(${member.color})` : `var(${tones[i % 2]})`);
+      el.style.setProperty("--s", scale);
+      el.innerHTML = `<svg viewBox="0 0 24 24"><path d="M4 2l16 9.5-7 1.8L9.8 21z"/></svg>` +
+        (member ? `<span class="crew-tag">${member.name}</span>` : "");
+      layer.appendChild(el);
+      return { el, svg: el.firstChild, x: startX, y: startY, rot: 0, shown: false };
+    });
+
+    const place = bee => {
+      bee.el.style.transform = `translate(${bee.x}px, ${bee.y}px)`;
+      bee.svg.style.transform = `translate(-50%, -50%) rotate(${bee.rot}deg) scale(var(--s))`;
+    };
+    const faceTravel = (bee, x, y) => {
+      const dx = x - bee.x, dy = y - bee.y;
+      if (dx * dx + dy * dy > 0.02) bee.rot = (Math.atan2(dy, dx) * 180) / Math.PI + 135;
+      bee.x = x;
+      bee.y = y;
+    };
+    const showBee = bee => {
+      if (!bee.shown) { bee.shown = true; bee.el.classList.add("on"); }
+    };
+
+    const state = { layer, bees, type: zone.type, cx: zone.cx, cy: zone.cy, phase: "train", t0: performance.now(), done: false };
+    state.slots = slotsFor(contour, count, zone);
+    const spacing = loop.length / count;
+    const flyTime = 2200 + route.length * 1.1;
+
+    const frame = now => {
+      if (state.done) return;
+      if (state.phase === "train") {
+        const head = route.length * easeInOut(clamp01((now - state.t0) / flyTime));
+        bees.forEach((bee, i) => {
+          const d = head - i * spacing;
+          if (d <= 0) return;
+          showBee(bee);
+          const [x, y] = route.at(d);
+          faceTravel(bee, x, y);
+          place(bee);
+        });
+        if (now - state.t0 >= flyTime) {
+          // Everyone settles from their place in the train into their final spot
+          bees.forEach(bee => { showBee(bee); bee.fromX = bee.x; bee.fromY = bee.y; });
+          state.phase = "morph";
+          state.t0 = now;
+        }
+      } else if (state.phase === "morph") {
+        let moving = false;
+        bees.forEach((bee, i) => {
+          const t = clamp01((now - state.t0 - i * 14) / 800);
+          if (t < 1) moving = true;
+          const e = easeInOut(t);
+          faceTravel(bee, bee.fromX + (state.slots[i][0] - bee.fromX) * e, bee.fromY + (state.slots[i][1] - bee.fromY) * e);
+          place(bee);
+        });
+        if (!moving) {
+          state.phase = "formed";
+          state.t1 = now;
+          layer.classList.add("formed");
+        }
+      } else {
+        const age = (now - state.t1) / 1000;
+        // The heart beats; the flower slowly turns
+        const beat = state.type === "heart" ? 1 + 0.06 * Math.max(0, Math.sin(age * 4.4)) ** 3 : 1;
+        const spin = state.type === "flower" ? age * 0.14 : 0;
+        const cos = Math.cos(spin), sin = Math.sin(spin);
+        bees.forEach((bee, i) => {
+          const ox = state.slots[i][0] - state.cx, oy = state.slots[i][1] - state.cy;
+          bee.x = state.cx + (ox * cos - oy * sin) * beat;
+          bee.y = state.cy + (ox * sin + oy * cos) * beat;
+          const out = (Math.atan2(bee.y - state.cy, bee.x - state.cx) * 180) / Math.PI + 135;
+          const diff = ((out - bee.rot + 540) % 360) - 180;
+          bee.rot += diff * 0.12;
+          place(bee);
+        });
+      }
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+    return state;
+  };
+
+  const morphSwarm = zone => {
+    const contour = buildContour(zone.type, zone.cx, zone.cy, zone.size);
+    swarm.slots = slotsFor(contour, swarm.bees.length, zone);
+    swarm.type = zone.type;
+    swarm.cx = zone.cx;
+    swarm.cy = zone.cy;
+    swarm.phase = "morph";
+    swarm.t0 = performance.now();
+    swarm.layer.classList.remove("formed");
+    swarm.bees.forEach(bee => {
+      bee.fromX = bee.x;
+      bee.fromY = bee.y;
+      bee.shown = true;
+      bee.el.classList.add("on");
+    });
+  };
+
+  const endSwarm = () => {
+    const old = swarm;
+    swarm = null;
+    finaleOn = false;
+    syncCrew();
+    old.layer.classList.add("leaving");
+    setTimeout(() => { old.done = true; old.layer.remove(); }, 450);
+  };
+
+  let zoneQueued = false;
+  const checkZone = () => {
+    zoneQueued = false;
+    if (reelInView || document.hidden) return;
+    const zone = zoneNow();
+    if (!zone) {
+      if (swarm) endSwarm();
+      return;
+    }
+    if (!swarm) {
+      finaleOn = true;
+      syncCrew();
+      swarm = startSwarm(zone);
+    } else if (swarm.type !== zone.type) {
+      morphSwarm(zone);
+    }
+  };
+  const queueZone = () => {
+    if (!zoneQueued) {
+      zoneQueued = true;
+      requestAnimationFrame(checkZone);
+    }
+  };
+  window.addEventListener("scroll", queueZone, { passive: true });
+  window.addEventListener("resize", () => {
+    if (swarm) endSwarm();
+    queueZone();
+  });
 
   const crewSize = window.innerWidth <= 600 ? 2 : CREW.length;
   CREW.slice(0, crewSize).forEach(launch);
@@ -317,7 +627,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (reel && "IntersectionObserver" in window) {
     new IntersectionObserver(([entry]) => {
       reelInView = entry.intersectionRatio > 0.35;
-      crewEl.classList.toggle("off", reelInView);
+      syncCrew();
+      queueZone();
     }, { threshold: [0, 0.35, 0.6, 1] }).observe(reel);
   }
 });
