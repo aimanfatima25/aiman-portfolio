@@ -150,7 +150,7 @@
   fill: var(--c);
   stroke: var(--bg);
   stroke-width: 1.5;
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 55%, transparent));
+  will-change: transform;
 }
 .swarm-bee .crew-tag { top: 10px; left: 10px; transition: opacity .5s ease; }
 .swarm.formed .crew-tag { opacity: 0; }

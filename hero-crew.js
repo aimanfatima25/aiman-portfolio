@@ -183,8 +183,35 @@ document.addEventListener("DOMContentLoaded", () => {
   const syncCrew = () => crewEl.classList.toggle("off", reelInView || finaleOn);
 
   const RETYPE_AFTER = 30000;
-  const MAX_TYPING = 2;
+  const REVISIT_AFTER = 9000;
+  const MAX_TYPING = 1;
   const lastTyped = new Map();
+  const lastVisited = new Map();
+
+  // A heading and its subtitle, or a card and its title, count as one thing: one cursor at a time
+  const GROUPS = ".section-head, .work-card, .skill-card, .platform-card, .ship-card, .mini-card, .tool, .flow-card";
+  const groupOf = el => el.closest(GROUPS) || el;
+
+  // Reveal-on-scroll slides things up as they appear, so wait until they have landed
+  const hasLanded = el => {
+    const reveal = el.closest(".reveal");
+    if (!reveal) return true;
+    if (!reveal.classList.contains("visible")) return false;
+    const cs = getComputedStyle(reveal);
+    return cs.transform === "none" && cs.opacity === "1";
+  };
+
+  // Text gets a box around the words themselves, not the whole empty row
+  const TEXT_TARGETS = TYPE_TARGETS + ", .section-sub";
+  const rectOf = el => {
+    if (el.matches(TEXT_TARGETS)) {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const r = range.getBoundingClientRect();
+      if (r.width) return r;
+    }
+    return el.getBoundingClientRect();
+  };
   let typingNow = 0;
 
   const inView = el => {
@@ -207,11 +234,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const vh = window.innerHeight;
     const now = performance.now();
     const options = [...document.querySelectorAll(selector)].filter(el => {
-      if (taken.has(el)) return false;
+      const group = groupOf(el);
+      if (taken.has(group)) return false;
+      if (now - (lastVisited.get(group) ?? -REVISIT_AFTER) < REVISIT_AFTER) return false;
       if (typing && now - (lastTyped.get(el) ?? -RETYPE_AFTER) < RETYPE_AFTER) return false;
-      const reveal = el.closest(".reveal");
-      if (reveal && !reveal.classList.contains("visible")) return false;
-      const r = el.getBoundingClientRect();
+      if (!hasLanded(el)) return false;
+      const r = rectOf(el);
       return r.width > 0 && r.top > 70 && r.bottom < vh && r.width < window.innerWidth * 0.9;
     });
     return options[Math.floor(Math.random() * options.length)] || null;
@@ -285,6 +313,23 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     const maxX = () => document.documentElement.clientWidth - 90;
 
+    // Keep the box glued to its target, even if a card lifts on hover
+    let sized = false;
+    const follow = target => {
+      const tick = () => {
+        if (!box.classList.contains("on")) return;
+        const now = rectOf(target);
+        box.style.left = now.left + window.scrollX - 6 + "px";
+        box.style.top = now.top + window.scrollY - 6 + "px";
+        if (sized) {
+          box.style.width = now.width + 12 + "px";
+          box.style.height = now.height + 12 + "px";
+        }
+        requestAnimationFrame(tick);
+      };
+      tick();
+    };
+
     moveTo(Math.random() * maxX(), window.scrollY + Math.random() * window.innerHeight, 0);
     await sleep(index * 700);
 
@@ -297,64 +342,62 @@ document.addEventListener("DOMContentLoaded", () => {
         // Nothing free to work on here: hover nearby rather than staying off screen
         rejoin();
         moveTo(Math.random() * maxX(), window.scrollY + 90 + Math.random() * (window.innerHeight - 180), 320);
-        await sleep(650);
+        await sleep(800);
         continue;
       }
-      taken.add(target);
+      const group = groupOf(target);
+      taken.add(group);
       rejoin();
+      sized = false;
 
-      const r = target.getBoundingClientRect();
       if (typeTarget) {
         // Fly to the top-left corner, drag the box open, write the text in, then let it be read
-        const left = r.left + window.scrollX - 6, top = r.top + window.scrollY - 6;
+        typingNow++;
+        let r = rectOf(target);
         const fly = 260 + Math.random() * 220;
-        moveTo(Math.min(left - 4, maxX()), top - 2, fly);
+        moveTo(Math.min(r.left + window.scrollX - 10, maxX()), r.top + window.scrollY - 8, fly);
 
         if (await hold(fly, target)) {
-          typingNow++;
           lastTyped.set(target, performance.now());
+          r = rectOf(target);
           const hidden = hideLetters(target);
           const drag = 320 + Math.random() * 140;
           box.classList.add("drag");
           box.style.setProperty("--fly", drag + "ms");
-          box.style.left = left + "px";
-          box.style.top = top + "px";
           box.style.width = "0px";
           box.style.height = "0px";
           box.classList.add("on");
+          follow(target);
           void box.offsetWidth;
           box.style.width = r.width + 12 + "px";
           box.style.height = r.height + 12 + "px";
-          moveTo(Math.min(left + r.width + 8, maxX()), top + r.height + 10, drag);
+          moveTo(Math.min(r.right + window.scrollX + 8, maxX()), r.bottom + window.scrollY + 8, drag);
 
           const typed = (await hold(drag + 60, target)) && (await typeLetters(hidden.letters, target));
           hidden.restore();
-          typingNow--;
           if (typed) await hold(Math.min(4500, 1500 + hidden.letters.length * 60), target);
 
           box.classList.remove("on");
           await sleep(180);
           box.classList.remove("drag");
         }
+        typingNow--;
       } else {
-        const x = Math.min(r.right - 14 + window.scrollX, maxX());
-        const y = r.bottom - 12 + window.scrollY;
+        const r = rectOf(target);
         const fly = 260 + Math.random() * 240;
-        moveTo(x, y, fly);
+        moveTo(Math.min(r.right - 14 + window.scrollX, maxX()), r.bottom - 12 + window.scrollY, fly);
 
         if (await hold(fly, target)) {
-          const now = target.getBoundingClientRect();
-          box.style.left = now.left + window.scrollX - 6 + "px";
-          box.style.top = now.top + window.scrollY - 6 + "px";
-          box.style.width = now.width + 12 + "px";
-          box.style.height = now.height + 12 + "px";
+          sized = true;
           box.classList.add("on");
+          follow(target);
           await hold(600 + Math.random() * 500, target);
           box.classList.remove("on");
         }
       }
 
-      taken.delete(target);
+      taken.delete(group);
+      lastVisited.set(group, performance.now());
       await sleep(60 + Math.random() * 160);
     }
   };
@@ -486,7 +529,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const el = document.createElement("div");
       el.className = "swarm-bee";
       el.style.setProperty("--c", member ? `var(${member.color})` : `var(${tones[i % 2]})`);
-      el.style.setProperty("--s", scale);
       el.innerHTML = `<svg viewBox="0 0 24 24"><path d="M4 2l16 9.5-7 1.8L9.8 21z"/></svg>` +
         (member ? `<span class="crew-tag">${member.name}</span>` : "");
       layer.appendChild(el);
@@ -494,8 +536,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const place = bee => {
-      bee.el.style.transform = `translate(${bee.x}px, ${bee.y}px)`;
-      bee.svg.style.transform = `translate(-50%, -50%) rotate(${bee.rot}deg) scale(var(--s))`;
+      bee.el.style.transform = `translate3d(${bee.x}px, ${bee.y}px, 0)`;
+      bee.svg.style.transform = `translate(-11px, -11px) rotate(${bee.rot}deg) scale(${scale})`;
     };
     const faceTravel = (bee, x, y) => {
       const dx = x - bee.x, dy = y - bee.y;
@@ -510,7 +552,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const state = { layer, bees, type: zone.type, cx: zone.cx, cy: zone.cy, phase: "train", t0: performance.now(), done: false };
     state.slots = slotsFor(contour, count, zone);
     const spacing = loop.length / count;
-    const flyTime = 2200 + route.length * 1.1;
+    const flyTime = Math.min(1700, 800 + route.length * 0.45);
 
     const frame = now => {
       if (state.done) return;
@@ -533,7 +575,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } else if (state.phase === "morph") {
         let moving = false;
         bees.forEach((bee, i) => {
-          const t = clamp01((now - state.t0 - i * 14) / 800);
+          const t = clamp01((now - state.t0 - i * 6) / 420);
           if (t < 1) moving = true;
           const e = easeInOut(t);
           faceTravel(bee, bee.fromX + (state.slots[i][0] - bee.fromX) * e, bee.fromY + (state.slots[i][1] - bee.fromY) * e);
